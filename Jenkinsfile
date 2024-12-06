@@ -40,10 +40,10 @@ pipeline {
             }
         }
     }
-     post { 
+     post {         // post build activities
         always { 
             echo 'I will always say Hello again!'
-            deleteDir()             // deletes workspace once build is completed
+            deleteDir()             // deletes workspace (/home/ec2-user/agent-1/workspace/...) once build is completed
         }
         success { 
             echo 'I will run when pipeline is success'
