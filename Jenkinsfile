@@ -9,6 +9,7 @@ pipeline {
     }
     environment{
         def appVersion = ''          // declare global variable to use it in multiple stages
+        nexusUrl='nexus.practicedevops.online:8081'
     }
     stages {
         stage('read version'){       // reading version from package.json
@@ -37,6 +38,37 @@ pipeline {
                     zip -q -r backend-${appVersion}.zip * -x Jenkinsfile -x backend-${appVersion}.zip
                 ls -ltr
                 '''
+            }
+        }
+        stage('Nexus Artifact Upload'){
+            steps{
+                script{
+                    nexusArtifactUploader(
+                        nexusVersion: 'nexus3',
+                        protocol: 'http',
+                        nexusUrl: "${nexusUrl}",
+                        groupId: 'com.expense',
+                        version: "${appVersion}",
+                        repository: "backend",          // nexus repo name
+                        credentialsId: 'nexus-auth',    // created in manage jenkins>credentials
+                        artifacts: [
+                            [artifactId: "backend" ,
+                            classifier: '',
+                            file: "backend-" + "${appVersion}" + '.zip',
+                            type: 'zip']
+                        ]
+                    )
+                }
+            }
+        }
+        stage('Deploy'){
+            steps{
+                script{
+                    def params = [
+                        string(name: 'appVersion', value: "${appVersion}")
+                    ]
+                    build job: 'backend-deploy', parameters: params, wait: false
+                }
             }
         }
     }
